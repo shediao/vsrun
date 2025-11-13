@@ -13,26 +13,59 @@ _COM_SMARTPTR_TYPEDEF(ISetupConfiguration2, __uuidof(ISetupConfiguration2));
 _COM_SMARTPTR_TYPEDEF(ISetupHelper, __uuidof(ISetupHelper));
 _COM_SMARTPTR_TYPEDEF(ISetupPackageReference, __uuidof(ISetupPackageReference));
 
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <subprocess/subprocess.hpp>
 
+class win32_exception : public std::exception {
+ public:
+  win32_exception(_In_ DWORD code, _In_z_ const char* what) noexcept
+      : std::exception(what), m_code(code) {}
+
+  win32_exception(_In_ const win32_exception& obj) noexcept
+      : std::exception(obj) {
+    m_code = obj.m_code;
+  }
+
+  DWORD code() const noexcept { return m_code; }
+
+ private:
+  DWORD m_code;
+};
+
+class CoInitializer {
+ public:
+  CoInitializer() {
+    hr = ::CoInitialize(NULL);
+    if (FAILED(hr)) {
+      throw win32_exception(hr, "failed to initialize COM");
+    }
+  }
+
+  ~CoInitializer() {
+    if (SUCCEEDED(hr)) {
+      ::CoUninitialize();
+    }
+  }
+
+ private:
+  HRESULT hr;
+};
+
 int main(int argc, char* argv[]) {
-  CoInitializeEx(NULL, COINIT_MULTITHREADED);
+  CoInitializer comInitializer;
 
   ISetupConfigurationPtr configuration;
-  if (FAILED(configuration.CreateInstance(__uuidof(SetupConfiguration)))) {
-    std::cerr << "Failed to create instance of SetupConfiguration" << std::endl;
-    CoUninitialize();
-    return 1;
+  if (auto hr = configuration.CreateInstance(__uuidof(SetupConfiguration));
+      FAILED(hr)) {
+    throw win32_exception(hr, "failed to create query class");
   }
 
   ISetupConfiguration2Ptr configuration2(configuration);
   IEnumSetupInstancesPtr instances;
-  if (FAILED(configuration2->EnumInstances(&instances))) {
-    std::cerr << "Failed to enumerate instances" << std::endl;
-    CoUninitialize();
-    return 1;
+  if (auto hr = configuration2->EnumInstances(&instances); FAILED(hr)) {
+    throw win32_exception(hr, "failed to query all instances");
   }
 
   ISetupHelperPtr helper(configuration2);
@@ -67,7 +100,6 @@ int main(int argc, char* argv[]) {
 
   if (newInstallationPath.empty()) {
     std::cerr << "No instances found" << std::endl;
-    CoUninitialize();
     return 1;
   }
   for (int i = 1; i < argc; i++) {
@@ -90,6 +122,5 @@ int main(int argc, char* argv[]) {
   }
   auto result = subprocess::run(args);
 
-  CoUninitialize();
   return result;
 }

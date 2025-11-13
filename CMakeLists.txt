@@ -24,5 +24,8 @@ FetchContent_MakeAvailable(argparse)
 
 add_executable(vsrun src/vsrun.cc)
 
+if(MSVC)
+  target_compile_options(vsrun PRIVATE /source-charset:utf-8 /EHsc)
+endif()
 target_include_directories(vsrun PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
 target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse)
