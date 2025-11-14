@@ -7,6 +7,7 @@ project(
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 include(FetchContent)
 
@@ -28,4 +29,5 @@ if(MSVC)
   target_compile_options(vsrun PRIVATE /source-charset:utf-8 /EHsc)
 endif()
 target_include_directories(vsrun PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
+target_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
 target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse)
