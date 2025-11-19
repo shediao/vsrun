@@ -1,5 +1,4 @@
 
-#include <cstdlib>
 #define NOMINMAX
 
 #include <comdef.h>
@@ -125,6 +124,7 @@ struct VisualStudio {
   std::wstring product_id_;
   bool is_complete_;
   bool is_prerelease_;
+  std::vector<std::wstring> workloads_;
   bool is_complete() const { return is_complete_; }
   bool is_prerelease() const { return is_prerelease_; }
   bool is_product_match(std::wstring const& product_pattern) const {
@@ -135,7 +135,16 @@ struct VisualStudio {
            product_id_;
   }
   bool is_workload_match(std::wstring const& workload_pattern) const {
-    return true;
+    if (workload_pattern == L"*" && !workloads_.empty()) {
+      return true;
+    }
+
+    for (auto const& workload : workloads_) {
+      if (0 == _wcsicmp(workload_pattern.c_str(), workload.c_str())) {
+        return true;
+      }
+    }
+    return false;
   }
   bool is_version_match(uint64_t min, uint64_t max) const {
     return version_ >= min && version_ <= max;
@@ -151,6 +160,10 @@ std::wostream& operator<<(std::wostream& out, VisualStudio const& vs) {
   out << L"Product: " << vs.product_id_ << L'\n';
   out << L"Complete: " << std::boolalpha << vs.is_complete_ << L'\n';
   out << L"Prerelease: " << vs.is_prerelease_ << L'\n';
+  // out << L"Workloads: ";
+  // std::copy(vs.workloads_.begin(), vs.workloads_.end(),
+  //           std::ostream_iterator<std::wstring, wchar_t>(out, L", "));
+  // out << L'\n';
   return out;
 }
 
@@ -210,6 +223,42 @@ std::vector<VisualStudio> GetAllVisualStudio(ISetupConfiguration2Ptr& config) {
       }
     }
 
+    LPSAFEARRAY psa = nullptr;
+    if (FAILED(instance2->GetPackages(&psa))) {
+      continue;
+    }
+    std::unique_ptr<LPSAFEARRAY, decltype([](LPSAFEARRAY* ppsa) {
+                      if (ppsa && *ppsa) {
+                        if ((*ppsa)->cLocks) {
+                          ::SafeArrayUnlock(*ppsa);
+                        }
+                        ::SafeArrayDestroy(*ppsa);
+                      }
+                    })>
+        psa_guard(&psa);
+
+    std::vector<std::wstring> workloads;
+
+    ::SafeArrayLock(psa);
+
+    auto begin = reinterpret_cast<ISetupPackageReferencePtr*>(psa->pvData);
+    auto end = begin + psa->rgsabound[0].cElements;
+    std::vector<ISetupPackageReferencePtr> all_packages{begin, end};
+    for (auto package_ptr : all_packages) {
+      bstr_t type;
+      if (FAILED(package_ptr->GetType(type.GetAddress()))) {
+        continue;
+      }
+      if (0 != _wcsicmp(L"Workload", type.GetBSTR())) {
+        continue;
+      }
+      bstr_t id;
+      if (FAILED(package_ptr->GetId(id.GetAddress()))) {
+        continue;
+      }
+      workloads.push_back(id.GetBSTR());
+    }
+
     result.push_back({.version_ = version,
                       .install_datetime_ = install_time,
                       .install_version_ = install_version.GetBSTR(),
@@ -217,7 +266,8 @@ std::vector<VisualStudio> GetAllVisualStudio(ISetupConfiguration2Ptr& config) {
                       .display_name_ = display_name.GetBSTR(),
                       .product_id_ = product_id.GetBSTR(),
                       .is_complete_ = (is_complete != VARIANT_FALSE),
-                      .is_prerelease_ = (is_prerelease != VARIANT_FALSE)});
+                      .is_prerelease_ = (is_prerelease != VARIANT_FALSE),
+                      .workloads_ = workloads});
   }
   return result;
 }
@@ -249,6 +299,7 @@ int main(int argc, char* argv[]) {
   bool check_installed_or_not = false;
   std::string sort_by = "";
   bool select_the_first_one{true};
+  std::string select_workload = "*";
 
   argparse::ArgParser parser{
       "vsrun",
@@ -268,6 +319,11 @@ int main(int argc, char* argv[]) {
                   "search all product instances installed",
                   product_id)
       .choices({"Professional", "Enterprise", "Community", "*"});
+
+  parser.add_option(
+      "workload",
+      "require workload, Microsoft.VisualStudio.Workload.NativeDesktop",
+      select_workload);
 
   parser
       .add_option(
@@ -335,10 +391,10 @@ int main(int argc, char* argv[]) {
                   list_visual_studio);
   parser.add_flag("v,verbose", "show verbose messages", debug_level);
 
-  parser.add_flag("c,check", "check require visual studio is installed",
+  parser.add_flag("check", "check require visual studio is installed",
                   check_installed_or_not);
 
-  parser.add_positional("command", "run command in vs dev environment",
+  parser.add_positional("CMDSTR", "run command in vs dev environment",
                         user_cmds);
 
   try {
@@ -380,7 +436,8 @@ int main(int argc, char* argv[]) {
   std::vector<VisualStudio> all_match_visualstudios;
   for (auto vs : all_vs) {
     if (vs.is_complete_ && vs.is_version_match(version_min, version_max) &&
-        vs.is_product_match(to_wstring(product_id))) {
+        vs.is_product_match(to_wstring(product_id)) &&
+        vs.is_workload_match(to_wstring(select_workload))) {
       all_match_visualstudios.push_back(vs);
     }
   }
