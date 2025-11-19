@@ -69,12 +69,22 @@ bool VisualStudio::is_product_match(std::wstring const& product_pattern) const {
   }
   std::wstring ipattern;
   std::transform(product_pattern.begin(), product_pattern.end(),
-                 std::back_inserter(ipattern),
-                 [](wchar_t c) { return std::tolower(c); });
+                 std::back_inserter(ipattern), [](wchar_t c) {
+                   if ('A' <= c && c <= 'Z') {
+                     return c - 'A' + 'a';
+                   } else {
+                     return static_cast<int>(c);
+                   }
+                 });
   std::wstring iproduct_id;
   std::transform(product_id_.begin(), product_id_.end(),
-                 std::back_inserter(iproduct_id),
-                 [](wchar_t c) { return std::tolower(c); });
+                 std::back_inserter(iproduct_id), [](wchar_t c) {
+                   if (L'A' <= c && c <= L'Z') {
+                     return c - L'A' + L'a';
+                   } else {
+                     return static_cast<int>(c);
+                   }
+                 });
   if (!ipattern.starts_with(L"microsoft.visualstudio.product.")) {
     ipattern = L"microsoft.visualstudio.product." + ipattern;
   }
@@ -305,6 +315,28 @@ std::vector<VisualStudio> GetMatchedVisualStudios(
   return all_visual_studio;
 }
 
+std::pair<bool, std::string> check_product_id(const std::string& val) {
+  auto product_id = val;
+  std::transform(product_id.begin(), product_id.end(), product_id.begin(),
+                 [](unsigned char c) {
+                   if ('A' <= c && c <= 'Z') {
+                     return c - 'A' + 'a';
+                   } else {
+                     return static_cast<int>(c);
+                   }
+                 });
+  if (product_id == "professional") {
+    return {true, ""};
+  }
+  if (product_id == "enterprise") {
+    return {true, ""};
+  }
+  if (product_id == "community") {
+    return {true, ""};
+  }
+  return {false, "not one of Professional,Enterprise,Community"};
+}
+
 std::pair<bool, std::string> check_sort_by(const std::string& val) {
   auto sort1 = split(val, ',', -1);
   auto sort_by_asc_desc = [](std::string const& val) {
@@ -317,7 +349,16 @@ std::pair<bool, std::string> check_sort_by(const std::string& val) {
   auto sort_by_product_checker = [](std::string const& val) {
     std::pair<bool, std::string> err_return = {
         false, "Professional,Enterprise,Community"};
-    auto s = split(val, '-', -1);
+    std::string product_ids = val;
+    std::transform(product_ids.begin(), product_ids.end(), product_ids.begin(),
+                   [](unsigned char c) {
+                     if ('A' <= c && c <= 'Z') {
+                       return c - 'A' + 'a';
+                     } else {
+                       return static_cast<int>(c);
+                     }
+                   });
+    auto s = split(product_ids, '-', -1);
     if (s.size() != 3) {
       return err_return;
     }

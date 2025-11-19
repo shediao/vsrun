@@ -19,6 +19,15 @@
 
 int main(int argc, char* argv[]) {
   CoInitializer comInitializer;
+  ISetupConfiguration2Ptr vs_setup_config([]() {
+    ISetupConfigurationPtr configuration;
+    if (auto hr = configuration.CreateInstance(__uuidof(SetupConfiguration));
+        FAILED(hr)) {
+      throw win32_exception(hr, "failed to create query class");
+    }
+    return configuration;
+  }());
+  ISetupHelperPtr helper(vs_setup_config);
 
   std::string version = "[16.0,)";
   std::string product_id = "*";  // Microsoft.VisualStudio.Product.*
@@ -29,17 +38,28 @@ int main(int argc, char* argv[]) {
   argparse::ArgParser parser{
       "vs-install-dir",
       "find Visual Studio install directory based on version and product"};
-  parser.add_option("version",
-                    "A version range for instances to find. Example: "
-                    "[17.0,18.0) will find versions 17.*.",
-                    version);
+  parser
+      .add_option("version",
+                  "A version range for instances to find. Example: "
+                  "[17.0,18.0) will find versions 17.*.",
+                  version)
+      .checker(
+          [&helper](std::string const& val) -> std::pair<bool, std::string> {
+            auto wversion = to_wstring(val);
+            uint64_t version_min, version_max;
+            if (FAILED(helper->ParseVersionRange(wversion.c_str(), &version_min,
+                                                 &version_max))) {
+              return {false, "not a valid version range: " + val};
+            }
+            return {true, ""};
+          });
   parser
       .add_option("product",
                   "One or more product IDs to find. Defaults to Community, "
                   "Professional, and Enterprise. Specify \"*\" by itself to "
                   "search all product instances installed",
                   product_id)
-      .choices({"Professional", "Enterprise", "Community", "*"});
+      .checker([](std::string const& val) { return check_product_id(val); });
 
   parser.add_option(
       "workload",
@@ -67,15 +87,6 @@ int main(int argc, char* argv[]) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
   }
-
-  ISetupConfiguration2Ptr vs_setup_config([]() {
-    ISetupConfigurationPtr configuration;
-    if (auto hr = configuration.CreateInstance(__uuidof(SetupConfiguration));
-        FAILED(hr)) {
-      throw win32_exception(hr, "failed to create query class");
-    }
-    return configuration;
-  }());
 
   std::map<std::string, std::string> sort_by_map;
   if (!sort_by.empty()) {

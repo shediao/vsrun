@@ -188,5 +188,6 @@ std::wstring to_wstring(const std::string_view str,
 std::string to_string(const std::wstring_view wstr,
                       const UINT to_codepage = CP_UTF8);
 
+std::pair<bool, std::string> check_product_id(const std::string& val);
 std::pair<bool, std::string> check_sort_by(std::string const& sort_by);
 #endif  // VISUAL_STUDIO_H_
