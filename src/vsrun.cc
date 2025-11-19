@@ -1,4 +1,5 @@
 
+#include <cstdlib>
 #define NOMINMAX
 
 #include <comdef.h>
@@ -245,6 +246,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> user_cmds;
   int debug_level = 0;
   bool list_visual_studio = false;
+  bool check_installed_or_not = false;
   std::string sort_by = "";
 
   argparse::ArgParser parser{
@@ -327,6 +329,9 @@ int main(int argc, char* argv[]) {
                   list_visual_studio);
   parser.add_flag("v,verbose", "show verbose messages", debug_level);
 
+  parser.add_flag("c,check", "check require visual studio is installed",
+                  check_installed_or_not);
+
   parser.add_positional("command", "run command in vs dev environment",
                         user_cmds);
 
@@ -334,7 +339,7 @@ int main(int argc, char* argv[]) {
     parser.parse(argc, argv);
   } catch (std::exception const& e) {
     std::cerr << e.what() << std::endl;
-    return 1;
+    return EXIT_FAILURE;
   }
 
   ISetupConfiguration2Ptr vs_setup_config([]() {
@@ -352,18 +357,18 @@ int main(int argc, char* argv[]) {
   if (S_OK !=
       helper->ParseVersionRange(wversion.c_str(), &version_min, &version_max)) {
     std::cerr << version << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
 
   auto all_vs = GetAllVisualStudio(vs_setup_config);
   if (all_vs.empty()) {
     std::cerr << "No VisualStudio installation found" << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
   if (!std::any_of(begin(all_vs), end(all_vs),
                    [](auto const& vs) { return vs.is_complete(); })) {
     std::cerr << "No Completed VisualStudio installation found" << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
 
   std::vector<VisualStudio> all_match_visualstudios;
@@ -373,12 +378,19 @@ int main(int argc, char* argv[]) {
       all_match_visualstudios.push_back(vs);
     }
   }
+  if (check_installed_or_not) {
+    if (all_match_visualstudios.empty()) {
+      return EXIT_FAILURE;
+    } else {
+      return EXIT_SUCCESS;
+    }
+  }
   if (all_match_visualstudios.size() == 0) {
     std::cerr << "Not Found ViusalStudio "
               << (product_id == "*" ? "Professional|Enterprise|Community"
                                     : product_id)
               << " " << version << " Installation" << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
   if (!sort_by.empty()) {
     std::vector<
@@ -454,14 +466,14 @@ int main(int argc, char* argv[]) {
       all_match_visualstudios[0].install_path_;
   if (!is_directory(installationPath)) {
     std::cerr << "installation not a directory: " << installationPath << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
   std::filesystem::path VcDevCmdPath =
       installationPath / "Common7" / "Tools" / "VsDevCmd.bat";
   if (!is_regular_file(VcDevCmdPath)) {
     std::cerr << VcDevCmdPath.string()
               << " not exists or not a bat file: " << VcDevCmdPath << '\n';
-    return 1;
+    return EXIT_FAILURE;
   }
 
   std::vector<std::string> args{"cmd.exe",
@@ -483,5 +495,5 @@ int main(int argc, char* argv[]) {
 
     return subprocess::run(args);
   }
-  return 0;
+  return EXIT_SUCCESS;
 }
