@@ -23,21 +23,19 @@ FetchContent_Declare(
   GIT_TAG main)
 FetchContent_MakeAvailable(argparse)
 
+add_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
+include_directories(${PROJECT_SOURCE_DIR}/include/vssetup)
+if(MSVC)
+  add_compile_options(/source-charset:utf-8 /EHsc)
+endif()
+
+add_library(visualstudio_search src/visualstudio.cc)
 add_executable(vsrun src/vsrun.cc)
 
-if(MSVC)
-  target_compile_options(vsrun PRIVATE /source-charset:utf-8 /EHsc)
-endif()
-target_include_directories(vsrun PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
-target_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
-target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse)
+target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse
+                                    visualstudio_search)
 
 add_executable(vs-install-dir src/vs-install-dir.cc)
-if(MSVC)
-  target_compile_options(vs-install-dir PRIVATE /source-charset:utf-8 /EHsc)
-endif()
-target_include_directories(vs-install-dir
-                           PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
-target_compile_definitions(vs-install-dir PRIVATE UNICODE _UNICODE)
-target_link_libraries(vs-install-dir PRIVATE subprocess::subprocess
-                                             argparse::argparse)
+target_link_libraries(
+  vs-install-dir PRIVATE subprocess::subprocess argparse::argparse
+                         visualstudio_search)
