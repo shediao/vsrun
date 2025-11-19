@@ -248,6 +248,7 @@ int main(int argc, char* argv[]) {
   bool list_visual_studio = false;
   bool check_installed_or_not = false;
   std::string sort_by = "";
+  bool select_the_first_one{true};
 
   argparse::ArgParser parser{
       "vsrun",
@@ -324,6 +325,11 @@ int main(int argc, char* argv[]) {
   parser.add_alias("c,community", "product", "Community");
   parser.add_alias("p,professional", "product", "Professional");
   parser.add_alias("e,enterprise", "product", "Enterprise");
+
+  parser.add_flag("first", "select the first one to run(Default)",
+                  select_the_first_one);
+  parser.add_negative_flag("last", "select the last one to run",
+                           select_the_first_one);
 
   parser.add_flag("list", "list all match visual studio infomation",
                   list_visual_studio);
@@ -463,7 +469,8 @@ int main(int argc, char* argv[]) {
   }
 
   std::filesystem::path installationPath =
-      all_match_visualstudios[0].install_path_;
+      select_the_first_one ? all_match_visualstudios.front().install_path_
+                           : all_match_visualstudios.back().install_path_;
   if (!is_directory(installationPath)) {
     std::cerr << "installation not a directory: " << installationPath << '\n';
     return EXIT_FAILURE;
