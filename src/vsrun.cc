@@ -3,6 +3,8 @@
 
 #include <comdef.h>
 #include <comutil.h>
+#include <fileapi.h>
+#include <minwinbase.h>
 #include <oaidl.h>
 #include <windows.h>
 #include <winerror.h>
@@ -96,8 +98,26 @@ class CoInitializer {
   HRESULT hr;
 };
 
+std::wstring ToISO8601(const FILETIME* ft) {
+  FILETIME lft;
+  if (!::FileTimeToLocalFileTime(ft, &lft)) {
+    return L"";
+  }
+
+  SYSTEMTIME st;
+  if (!::FileTimeToSystemTime(&lft, &st)) {
+    return L"";
+  }
+
+  wchar_t wz[20] = {L'\0'};
+  auto cch = ::swprintf_s(wz, L"%04u-%02u-%02u %02u:%02u:%02u", st.wYear,
+                          st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+  return std::wstring(wz);
+}
+
 struct VisualStudio {
   uint64_t version_;
+  FILETIME install_datetime_;
   std::wstring install_version_;
   std::wstring install_path_;
   std::wstring display_name_;
@@ -122,13 +142,14 @@ struct VisualStudio {
 };
 
 std::wostream& operator<<(std::wostream& out, VisualStudio const& vs) {
-  out << L"version: " << vs.install_version_ << " (" << vs.version_ << ")"
+  out << L"Version: " << vs.install_version_ << " (" << vs.version_ << ")"
       << L'\n';
-  out << L"install: " << vs.install_path_ << L'\n';
-  out << L"display: " << vs.display_name_ << L'\n';
-  out << L"product: " << vs.product_id_ << L'\n';
-  out << L"complete: " << std::boolalpha << vs.is_complete_ << L'\n';
-  out << L"prerelease: " << vs.is_prerelease_ << L'\n';
+  out << L"Date: " << ToISO8601(&vs.install_datetime_) << L'\n';
+  out << L"Install: " << vs.install_path_ << L'\n';
+  out << L"Display: " << vs.display_name_ << L'\n';
+  out << L"Product: " << vs.product_id_ << L'\n';
+  out << L"Complete: " << std::boolalpha << vs.is_complete_ << L'\n';
+  out << L"Prerelease: " << vs.is_prerelease_ << L'\n';
   return out;
 }
 
@@ -160,6 +181,12 @@ std::vector<VisualStudio> GetAllVisualStudio(ISetupConfiguration2Ptr& config) {
             instance2->GetInstallationVersion(install_version.GetAddress()))) {
       continue;
     }
+
+    FILETIME install_time;
+    if (FAILED(instance2->GetInstallDate(&install_time))) {
+      continue;
+    }
+
     uint64_t version;
     helper->ParseVersion(install_version.GetBSTR(), &version);
 
@@ -183,6 +210,7 @@ std::vector<VisualStudio> GetAllVisualStudio(ISetupConfiguration2Ptr& config) {
     }
 
     result.push_back({.version_ = version,
+                      .install_datetime_ = install_time,
                       .install_version_ = install_version.GetBSTR(),
                       .install_path_ = install_path.GetBSTR(),
                       .display_name_ = display_name.GetBSTR(),
@@ -276,7 +304,8 @@ int main(int argc, char* argv[]) {
           if (sort2.size() != 2) {
             return std::pair<bool, std::string>{false, s1};
           }
-          if (sort2[0] == "version" || sort2[0] == "time") {
+          if (sort2[0] == "version" || sort2[0] == "date" ||
+              sort2[0] == "time") {
             if (auto [ret, msg] = sort_by_asc_desc(sort2[1]); ret) {
               continue;
             }
@@ -371,6 +400,20 @@ int main(int argc, char* argv[]) {
               [](VisualStudio const& a, VisualStudio const& b) {
                 return b.version_ < a.version_;
               });
+        }
+      } else if (sort_name == "date" || sort_name == "time") {
+        if (sort_func == "asc") {
+          sort_functions.push_back([](VisualStudio const& a,
+                                      VisualStudio const& b) {
+            return CompareFileTime(&a.install_datetime_, &b.install_datetime_) <
+                   0;
+          });
+        } else {
+          sort_functions.push_back([](VisualStudio const& a,
+                                      VisualStudio const& b) {
+            return CompareFileTime(&a.install_datetime_, &b.install_datetime_) >
+                   0;
+          });
         }
       } else if (sort_name == "product") {
         auto s = argparse::detail::split(sort_func, '-', -1);
