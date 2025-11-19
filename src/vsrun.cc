@@ -131,8 +131,18 @@ struct VisualStudio {
     if (product_pattern == L"*") {
       return true;
     }
-    return (L"Microsoft.VisualStudio.Product." + product_pattern) ==
-           product_id_;
+    std::wstring ipattern;
+    std::transform(product_pattern.begin(), product_pattern.end(),
+                   std::back_inserter(ipattern),
+                   [](wchar_t c) { return std::tolower(c); });
+    std::wstring iproduct_id;
+    std::transform(product_id_.begin(), product_id_.end(),
+                   std::back_inserter(iproduct_id),
+                   [](wchar_t c) { return std::tolower(c); });
+    if (!ipattern.starts_with(L"microsoft.visualstudio.product.")) {
+      ipattern = L"microsoft.visualstudio.product." + ipattern;
+    }
+    return ipattern == iproduct_id;
   }
   bool is_workload_match(std::wstring const& workload_pattern) const {
     if (workload_pattern == L"*" && !workloads_.empty()) {
