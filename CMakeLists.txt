@@ -31,3 +31,13 @@ endif()
 target_include_directories(vsrun PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
 target_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
 target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse)
+
+add_executable(vs-install-dir src/vs-install-dir.cc)
+if(MSVC)
+  target_compile_options(vs-install-dir PRIVATE /source-charset:utf-8 /EHsc)
+endif()
+target_include_directories(vs-install-dir
+                           PRIVATE ${PROJECT_SOURCE_DIR}/include/vssetup)
+target_compile_definitions(vs-install-dir PRIVATE UNICODE _UNICODE)
+target_link_libraries(vs-install-dir PRIVATE subprocess::subprocess
+                                             argparse::argparse)
