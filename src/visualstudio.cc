@@ -117,10 +117,10 @@ std::wostream& operator<<(std::wostream& out, VisualStudio const& vs) {
   out << L"Product: " << vs.product_id_ << L'\n';
   out << L"Complete: " << std::boolalpha << vs.is_complete_ << L'\n';
   out << L"Prerelease: " << vs.is_prerelease_ << L'\n';
-  // out << L"Workloads: ";
-  // std::copy(vs.workloads_.begin(), vs.workloads_.end(),
-  //           std::ostream_iterator<std::wstring, wchar_t>(out, L", "));
-  // out << L'\n';
+  out << L"Workloads: ";
+  std::copy(vs.workloads_.begin(), vs.workloads_.end(),
+            std::ostream_iterator<std::wstring, wchar_t>(out, L", "));
+  out << L'\n';
   return out;
 }
 
