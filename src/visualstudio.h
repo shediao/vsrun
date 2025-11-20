@@ -181,7 +181,8 @@ std::wostream& operator<<(std::wostream& out, VisualStudio const& vs);
 std::vector<VisualStudio> GetMatchedVisualStudios(
     ISetupConfiguration2Ptr& config, std::string const& version,
     std::string const& product = "*", std::string const& workload = "*",
-    std::map<std::string, std::string> const& sort_by = {});
+    std::map<std::string, std::string> const& sort_by = {},
+    int debug_level = 0);
 
 std::wstring to_wstring(const std::string_view str,
                         const UINT from_codepage = CP_UTF8);

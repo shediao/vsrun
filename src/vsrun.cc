@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   parser.add_option("host-arch", "host cpu arch", host_arch)
       .choices({"x86", "x64", "arm64"});
   parser
-      .add_option("version",
+      .add_option("v,version",
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
                   version)
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 
   parser.add_flag("list", "list all match visual studio infomation",
                   list_visual_studio);
-  parser.add_flag("v,verbose", "show verbose messages", debug_level);
+  parser.add_flag("verbose", "show verbose messages", debug_level);
 
   parser.add_flag("check", "check require visual studio is installed",
                   check_installed_or_not);
@@ -140,8 +140,9 @@ int main(int argc, char* argv[]) {
       sort_by_map[s2[0]] = s2[1];
     }
   }
-  auto all_match_visualstudios = GetMatchedVisualStudios(
-      vs_setup_config, version, product_id, select_workload, sort_by_map);
+  auto all_match_visualstudios =
+      GetMatchedVisualStudios(vs_setup_config, version, product_id,
+                              select_workload, sort_by_map, debug_level);
   if (all_match_visualstudios.empty()) {
     std::cerr << "No VisualStudio installation found" << '\n';
     return EXIT_FAILURE;

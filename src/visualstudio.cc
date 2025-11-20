@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <iterator>
 #include <map>
 #include <ostream>
@@ -188,7 +189,7 @@ void SortVisualStudio(std::vector<VisualStudio>& all_visual_studio,
 std::vector<VisualStudio> GetMatchedVisualStudios(
     ISetupConfiguration2Ptr& config, std::string const& filter_version,
     std::string const& filter_product, std::string const& filter_workload,
-    std::map<std::string, std::string> const& sort_by) {
+    std::map<std::string, std::string> const& sort_by, int debug_level) {
   std::vector<VisualStudio> all_visual_studio;
   IEnumSetupInstancesPtr instances;
   if (auto hr = config->EnumInstances(&instances); FAILED(hr)) {
@@ -290,6 +291,11 @@ std::vector<VisualStudio> GetMatchedVisualStudios(
          .is_complete_ = (is_complete != VARIANT_FALSE),
          .is_prerelease_ = (is_prerelease != VARIANT_FALSE),
          .workloads_ = workloads});
+    if (debug_level > 0) {
+      std::wcerr << L"Found VisualStudio: No." << all_visual_studio.size()
+                 << L'\n';
+      std::wcerr << all_visual_studio.back() << '\n';
+    }
   }
 
   uint64_t version_min, version_max;
@@ -304,15 +310,26 @@ std::vector<VisualStudio> GetMatchedVisualStudios(
     if (vs.is_complete_ && vs.is_version_match(version_min, version_max) &&
         vs.is_product_match(to_wstring(filter_product)) &&
         vs.is_workload_match(to_wstring(filter_workload))) {
+      if (debug_level > 0) {
+        std::cerr << "Match: version(" << filter_version << "), product("
+                  << filter_product << "), filter_workload(" << filter_workload
+                  << ")" << to_string(vs.display_name_) << '\n';
+      }
       all_match_visualstudios.push_back(vs);
+    } else {
+      if (debug_level > 0) {
+        std::cerr << "Not Match: version(" << filter_version << "), product("
+                  << filter_product << "), filter_workload(" << filter_workload
+                  << ")" << to_string(vs.display_name_) << '\n';
+      }
     }
   }
 
   if (!sort_by.empty()) {
-    SortVisualStudio(all_visual_studio, sort_by);
+    SortVisualStudio(all_match_visualstudios, sort_by);
   }
 
-  return all_visual_studio;
+  return all_match_visualstudios;
 }
 
 std::pair<bool, std::string> check_product_id(const std::string& val) {

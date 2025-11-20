@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
   }());
   ISetupHelperPtr helper(vs_setup_config);
 
+  int debug_level = 0;
   std::string version = "[16.0,)";
   std::string product_id = "*";  // Microsoft.VisualStudio.Product.*
   std::string sort_by = "";
@@ -39,7 +40,7 @@ int main(int argc, char* argv[]) {
       "vs-install-dir",
       "find Visual Studio install directory based on version and product"};
   parser
-      .add_option("version",
+      .add_option("v,version",
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
                   version)
@@ -80,6 +81,7 @@ int main(int argc, char* argv[]) {
   parser.add_alias("c,community", "product", "Community");
   parser.add_alias("p,professional", "product", "Professional");
   parser.add_alias("e,enterprise", "product", "Enterprise");
+  parser.add_flag("verbose", "show verbose messages", debug_level);
 
   try {
     parser.parse(argc, argv);
@@ -96,8 +98,9 @@ int main(int argc, char* argv[]) {
       sort_by_map[s2[0]] = s2[1];
     }
   }
-  auto all_match_visualstudios = GetMatchedVisualStudios(
-      vs_setup_config, version, product_id, select_workload, sort_by_map);
+  auto all_match_visualstudios =
+      GetMatchedVisualStudios(vs_setup_config, version, product_id,
+                              select_workload, sort_by_map, debug_level);
 
   if (all_match_visualstudios.empty()) {
     return EXIT_FAILURE;
