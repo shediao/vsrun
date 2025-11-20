@@ -143,10 +143,6 @@ int main(int argc, char* argv[]) {
   auto all_match_visualstudios =
       GetMatchedVisualStudios(vs_setup_config, version, product_id,
                               select_workload, sort_by_map, debug_level);
-  if (all_match_visualstudios.empty()) {
-    std::cerr << "No VisualStudio installation found" << '\n';
-    return EXIT_FAILURE;
-  }
 
   if (check_installed_or_not) {
     if (all_match_visualstudios.empty()) {
@@ -155,45 +151,48 @@ int main(int argc, char* argv[]) {
       return EXIT_SUCCESS;
     }
   }
-  if (all_match_visualstudios.size() == 0) {
-    std::cerr << "Not Found ViusalStudio "
-              << (product_id == "*" ? "Professional|Enterprise|Community"
-                                    : product_id)
-              << " " << version << " Installation" << '\n';
-    return EXIT_FAILURE;
-  }
-
   if (list_visual_studio) {
     for (auto const& vs : all_match_visualstudios) {
       std::wcout << vs << '\n';
     }
   }
 
-  std::filesystem::path installationPath =
-      select_the_first_one ? all_match_visualstudios.front().install_path_
-                           : all_match_visualstudios.back().install_path_;
-  if (!is_directory(installationPath)) {
-    std::cerr << "installation not a directory: " << installationPath << '\n';
-    return EXIT_FAILURE;
-  }
-  std::filesystem::path VcDevCmdPath =
-      installationPath / "Common7" / "Tools" / "VsDevCmd.bat";
-  if (!is_regular_file(VcDevCmdPath)) {
-    std::cerr << VcDevCmdPath.string()
-              << " not exists or not a bat file: " << VcDevCmdPath << '\n';
+  // run command
+  if (all_match_visualstudios.empty()) {
+    if (!list_visual_studio && !check_installed_or_not) {
+      std::cerr << "Not Found ViusalStudio "
+                << (product_id == "*" ? "Professional|Enterprise|Community"
+                                      : product_id)
+                << " " << version << " Installation" << '\n';
+    }
     return EXIT_FAILURE;
   }
 
-  std::vector<std::string> args{"cmd.exe",
-                                "/d",
-                                "/c",
-                                "call",
-                                quote_path_if_needed(VcDevCmdPath.string()),
-                                "-no_logo",
-                                "-host_arch=" + host_arch,
-                                "-arch=" + arch,
-                                ">nul&&"};
   if (!user_cmds.empty()) {
+    std::filesystem::path installationPath =
+        select_the_first_one ? all_match_visualstudios.front().install_path_
+                             : all_match_visualstudios.back().install_path_;
+    if (!is_directory(installationPath)) {
+      std::cerr << "installation not a directory: " << installationPath << '\n';
+      return EXIT_FAILURE;
+    }
+    std::filesystem::path VcDevCmdPath =
+        installationPath / "Common7" / "Tools" / "VsDevCmd.bat";
+    if (!is_regular_file(VcDevCmdPath)) {
+      std::cerr << VcDevCmdPath.string()
+                << " not exists or not a bat file: " << VcDevCmdPath << '\n';
+      return EXIT_FAILURE;
+    }
+
+    std::vector<std::string> args{"cmd.exe",
+                                  "/d",
+                                  "/c",
+                                  "call",
+                                  quote_path_if_needed(VcDevCmdPath.string()),
+                                  "-no_logo",
+                                  "-host_arch=" + host_arch,
+                                  "-arch=" + arch,
+                                  ">nul&&"};
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
     if (debug_level >= 1) {
       std::copy(begin(args), end(args),
