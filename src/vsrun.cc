@@ -1,6 +1,4 @@
 
-#define NOMINMAX
-
 #include <comdef.h>
 #include <comutil.h>
 #include <fileapi.h>

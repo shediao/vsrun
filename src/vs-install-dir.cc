@@ -9,7 +9,6 @@
 #include <windows.h>
 #include <winerror.h>
 
-#include <algorithm>
 #include <argparse/argparse.hpp>
 #include <exception>
 #include <iostream>
