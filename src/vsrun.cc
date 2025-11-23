@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
   std::string host_arch = "x64";
 #endif
 
-  std::string version = "[16.0,)";
+  std::string version_range = "[16.0,)";
   std::string product_id = "*";  // Microsoft.VisualStudio.Product.*
   std::vector<std::string> user_cmds;
   int debug_level = 0;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
       .add_option("v,version",
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
-                  version)
+                  version_range)
       .checker(
           [&helper](std::string const& val) -> std::pair<bool, std::string> {
             auto wversion = to_wstring(val);
@@ -124,14 +124,6 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  uint64_t version_min, version_max;
-  auto wversion = to_wstring(version);
-  if (S_OK !=
-      helper->ParseVersionRange(wversion.c_str(), &version_min, &version_max)) {
-    std::cerr << version << '\n';
-    return EXIT_FAILURE;
-  }
-
   std::map<std::string, std::string> sort_by_map;
   if (!sort_by.empty()) {
     auto s1 = split(sort_by, ',', -1);
@@ -141,7 +133,7 @@ int main(int argc, char* argv[]) {
     }
   }
   auto all_match_visualstudios =
-      GetMatchedVisualStudios(vs_setup_config, version, product_id,
+      GetMatchedVisualStudios(vs_setup_config, version_range, product_id,
                               select_workload, sort_by_map, debug_level);
 
   if (check_installed_or_not) {
@@ -163,7 +155,7 @@ int main(int argc, char* argv[]) {
       std::cerr << "Not Found ViusalStudio "
                 << (product_id == "*" ? "Professional|Enterprise|Community"
                                       : product_id)
-                << " " << version << " Installation" << '\n';
+                << " " << version_range << " Installation" << '\n';
     }
     return EXIT_FAILURE;
   }

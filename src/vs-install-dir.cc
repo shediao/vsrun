@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
   ISetupHelperPtr helper(vs_setup_config);
 
   int debug_level = 0;
-  std::string version = "[16.0,)";
+  std::string version_range = "[16.0,)";
   std::string product_id = "*";  // Microsoft.VisualStudio.Product.*
   std::string sort_by = "";
   std::string select_workload = "*";
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
       .add_option("v,version",
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
-                  version)
+                  version_range)
       .checker(
           [&helper](std::string const& val) -> std::pair<bool, std::string> {
             auto wversion = to_wstring(val);
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     }
   }
   auto all_match_visualstudios =
-      GetMatchedVisualStudios(vs_setup_config, version, product_id,
+      GetMatchedVisualStudios(vs_setup_config, version_range, product_id,
                               select_workload, sort_by_map, debug_level);
 
   if (all_match_visualstudios.empty()) {
