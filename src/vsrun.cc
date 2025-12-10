@@ -201,6 +201,9 @@ int main(int argc, char* argv[]) {
     }
 
     return subprocess::run(args);
+  } else {
+    std::cerr << parser.usage() << '\n';
+    return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }
