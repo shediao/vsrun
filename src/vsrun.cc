@@ -115,6 +115,8 @@ int main(int argc, char* argv[]) {
   parser.add_positional("CMDSTR", "run command in vs dev environment",
                         user_cmds);
 
+  parser.set_remaining_are_positional();
+
   try {
     parser.parse(argc, argv);
   } catch (std::exception const& e) {
