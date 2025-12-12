@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <string_view>
