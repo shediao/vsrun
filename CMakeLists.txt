@@ -14,13 +14,13 @@ include(FetchContent)
 FetchContent_Declare(
   subprocess
   GIT_REPOSITORY https://github.com/shediao/subprocess.hpp.git
-  GIT_TAG main)
+  GIT_TAG v0.0.7)
 FetchContent_MakeAvailable(subprocess)
 
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/shediao/argparse.hpp.git
-  GIT_TAG main)
+  GIT_TAG v0.0.13)
 FetchContent_MakeAvailable(argparse)
 
 add_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)

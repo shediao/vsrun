@@ -116,6 +116,14 @@ int main(int argc, char* argv[]) {
                         user_cmds);
 
   parser.set_remaining_are_positional();
+  parser.help_footer(R"==(Examples:
+  vsrun where cmake cl
+
+  # '&&' must be quoted
+  vsrun cmake -B build -S . -D CMAKE_BUILD_TYPE=Release '&&' cmake --build build --config Release
+
+  vsrun "cmake -B build -S . -D CMAKE_BUILD_TYPE=Release && cmake --build build --config Release"
+  )==");
 
   try {
     parser.parse(argc, argv);
