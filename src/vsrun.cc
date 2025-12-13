@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
   bool select_the_first_one{true};
   std::string select_workload = "*";
 
+  std::string workdir;
+
   argparse::ArgParser parser{
       "vsrun",
       R"(call C:\*\Microsoft Visual Studio\*\Common7\Tools\VsDevCmd.bat && %*)"};
@@ -95,6 +97,16 @@ int main(int argc, char* argv[]) {
           "example `version:asc,product:Professional-Enterprise-Community`",
           sort_by)
       .checker([](std::string const& val) { return check_sort_by(val); });
+
+  parser.add_option("C", "work directory", workdir)
+      .value_help("workdir")
+      .checker([](std::string const& dir) {
+        if (std::filesystem::is_directory(dir)) {
+          return std::pair<bool, std::string>{true, ""};
+        } else {
+          return std::pair<bool, std::string>{false, dir + " not a directory"};
+        }
+      });
 
   parser.add_alias("c,community", "product", "Community");
   parser.add_alias("p,professional", "product", "Professional");
@@ -200,7 +212,9 @@ int main(int argc, char* argv[]) {
       std::cerr << '\n';
     }
 
-    return subprocess::run(args);
+    using subprocess::named_arguments::cwd;
+
+    return subprocess::run(args, cwd = workdir);
   } else {
     std::cerr << parser.usage() << '\n';
     return EXIT_FAILURE;
