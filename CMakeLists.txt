@@ -18,6 +18,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(subprocess)
 
 FetchContent_Declare(
+  environment
+  GIT_REPOSITORY https://github.com/shediao/environment.hpp.git
+  GIT_TAG v0.0.4)
+FetchContent_MakeAvailable(environment)
+
+FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/shediao/argparse.hpp.git
   GIT_TAG v0.0.13)
@@ -32,8 +38,9 @@ endif()
 add_library(visualstudio_search src/visualstudio.cc)
 add_executable(vsrun src/vsrun.cc)
 
-target_link_libraries(vsrun PRIVATE subprocess::subprocess argparse::argparse
-                                    visualstudio_search)
+target_link_libraries(
+  vsrun PRIVATE environment::environment subprocess::subprocess
+                argparse::argparse visualstudio_search)
 
 add_executable(vs-install-dir src/vs-install-dir.cc)
 target_link_libraries(

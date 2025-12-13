@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <argparse/argparse.hpp>
+#include <environment/environment.hpp>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
   std::string select_workload = "*";
 
   std::string workdir;
+  std::vector<std::string> uset_env_names;
 
   argparse::ArgParser parser{
       "vsrun",
@@ -106,6 +108,15 @@ int main(int argc, char* argv[]) {
         } else {
           return std::pair<bool, std::string>{false, dir + " not a directory"};
         }
+      });
+
+  parser.add_option("u", "remove environment named <name>", uset_env_names)
+      .value_help("name")
+      .checker([](std::string const& name) {
+        if (std::find(name.begin(), name.end(), '=') != name.end()) {
+          return std::pair<bool, std::string>{false, name + " contain '='"};
+        }
+        return std::pair<bool, std::string>{true, ""};
       });
 
   parser.add_alias("c,community", "product", "Community");
@@ -210,6 +221,10 @@ int main(int argc, char* argv[]) {
       std::copy(begin(args), end(args),
                 std::ostream_iterator<std::string>(std::cerr, " "));
       std::cerr << '\n';
+    }
+
+    for (auto env : uset_env_names) {
+      env::unset(env);
     }
 
     using subprocess::named_arguments::cwd;
