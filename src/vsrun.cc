@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
 
   parser.add_flag("list", "list all match visual studio infomation",
                   list_visual_studio);
-  parser.add_flag("verbose", "show verbose messages", debug_level);
+  parser.add_flag("V,verbose", "show verbose messages", debug_level);
 
   parser.add_flag("check", "check require visual studio is installed",
                   check_installed_or_not);
