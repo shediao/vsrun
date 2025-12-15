@@ -55,6 +55,8 @@ int main(int argc, char* argv[]) {
   bool select_the_first_one{true};
   std::string select_workload = "*";
 
+  bool ignore_environment = false;
+
   std::string workdir;
   std::vector<std::string> uset_env_names;
 
@@ -138,6 +140,9 @@ int main(int argc, char* argv[]) {
   parser.add_flag("check", "check require visual studio is installed",
                   check_installed_or_not);
 
+  parser.add_flag("i,ignore-environment", "start with an empty environment",
+                  ignore_environment);
+
   parser.add_positional("CMDSTR", "run command in vs dev environment",
                         user_cmds);
 
@@ -220,16 +225,18 @@ int main(int argc, char* argv[]) {
                                   "-arch=" + arch,
                                   ">nul&&"};
 
-    std::vector<std::pair<std::string, std::string>> envs;
+    std::map<std::string, std::string> envs;
+    for (auto name : uset_env_names) {
+      env::unset(name);
+    }
+    if (!ignore_environment) {
+      envs = env::allutf8();
+    }
     while (!user_cmds.empty() &&
            user_cmds.begin()->find('=') != std::string::npos) {
       auto tmp = split(*user_cmds.begin(), '=', 1);
-      envs.emplace_back(tmp[0], tmp.size() > 1 ? tmp[1] : "");
+      envs.insert({tmp[0], tmp.size() > 1 ? tmp[1] : ""});
       user_cmds.erase(user_cmds.begin());
-    }
-
-    for (auto const& [k, v] : envs) {
-      env::set(k, v);
     }
 
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
@@ -239,13 +246,10 @@ int main(int argc, char* argv[]) {
       std::cerr << '\n';
     }
 
-    for (auto env : uset_env_names) {
-      env::unset(env);
-    }
-
     using subprocess::named_arguments::cwd;
+    using subprocess::named_arguments::env;
 
-    return subprocess::run(args, cwd = workdir);
+    return subprocess::run(args, cwd = workdir, env = envs);
   } else {
     std::cerr << parser.usage() << '\n';
     return EXIT_FAILURE;
