@@ -266,7 +266,7 @@ std::vector<VisualStudio> GetMatchedVisualStudios(
 
     auto begin = reinterpret_cast<ISetupPackageReferencePtr*>(psa->pvData);
     auto end = begin + psa->rgsabound[0].cElements;
-    std::vector<ISetupPackageReferencePtr> all_packages{begin, end};
+    std::vector<ISetupPackageReferencePtr> all_packages(begin, end);
     for (auto package_ptr : all_packages) {
       bstr_t type;
       if (FAILED(package_ptr->GetType(type.GetAddress()))) {
