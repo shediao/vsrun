@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
                   version_range)
       .checker(
           [&helper](std::string const& val) -> std::pair<bool, std::string> {
-            auto wversion = to_wstring(val);
+            auto wversion = to_version_range(to_wstring(val));
             uint64_t version_min, version_max;
             if (FAILED(helper->ParseVersionRange(wversion.c_str(), &version_min,
                                                  &version_max))) {
@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
       sort_by_map[s2[0]] = s2[1];
     }
   }
-  auto all_match_visualstudios =
-      GetMatchedVisualStudios(vs_setup_config, version_range, product_id,
-                              select_workload, sort_by_map, debug_level);
+  auto all_match_visualstudios = GetMatchedVisualStudios(
+      vs_setup_config, to_version_range(version_range), product_id,
+      select_workload, sort_by_map, debug_level);
 
   if (all_match_visualstudios.empty()) {
     return EXIT_FAILURE;

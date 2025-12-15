@@ -442,5 +442,8 @@ std::wstring to_version_range(std::wstring wversion) {
 }
 
 std::string to_version_range(std::string version) {
+  if (version.empty()) {
+    return {};
+  }
   return to_string(to_version_range(to_wstring(version)));
 }
