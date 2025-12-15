@@ -228,6 +228,10 @@ int main(int argc, char* argv[]) {
       user_cmds.erase(user_cmds.begin());
     }
 
+    for (auto const& [k, v] : envs) {
+      env::set(k, v);
+    }
+
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
     if (debug_level >= 1) {
       std::copy(begin(args), end(args),
