@@ -214,4 +214,7 @@ std::string to_string(const std::wstring_view wstr,
 
 std::pair<bool, std::string> check_product_id(const std::string& val);
 std::pair<bool, std::string> check_sort_by(std::string const& sort_by);
+
+std::wstring to_version_range(std::wstring version);
+std::string to_version_range(std::string version);
 #endif  // VISUAL_STUDIO_H_

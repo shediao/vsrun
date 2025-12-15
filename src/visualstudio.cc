@@ -410,3 +410,37 @@ std::pair<bool, std::string> check_sort_by(const std::string& val) {
   }
   return std::pair<bool, std::string>{true, ""};
 }
+
+std::wstring to_version_range(std::wstring wversion) {
+  if (wversion.front() != L'[' && wversion.front() != L'(') {
+    auto it = std::find_if(wversion.begin(), wversion.end(), [](wchar_t c) {
+      return (c != L'.' && !(L'0' <= c && L'9' >= c));
+    });
+    if (it != wversion.end()) {
+      return wversion;
+    } else {
+      auto dot_count = std::count(wversion.begin(), wversion.end(), L'.');
+      if (dot_count > 3) {
+        return wversion;
+      }
+      if (dot_count == 3) {
+        if (auto last_dot = wversion.find_last_of(L'.');
+            last_dot != std::string::npos) {
+          auto max_version = wversion.substr(0, last_dot - 0) + +L".65535";
+          wversion = L"[" + wversion + L"," + max_version + L")";
+        }
+      } else if (dot_count == 2) {
+        wversion = L"[" + wversion + L"," + wversion + L".65535)";
+      } else if (dot_count == 1) {
+        wversion = L"[" + wversion + L"," + wversion + L".65535.65535)";
+      } else if (dot_count == 0) {
+        wversion = L"[" + wversion + L"," + wversion + L".65535.65535.65535)";
+      }
+    }
+  }
+  return wversion;
+}
+
+std::string to_version_range(std::string version) {
+  return to_string(to_version_range(to_wstring(version)));
+}

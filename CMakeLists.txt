@@ -52,3 +52,13 @@ if(MINGW)
   target_link_options(vs-install-dir PRIVATE -static -static-libgcc
                       -static-libstdc++)
 endif()
+
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  option(VSRUN_BUILD_TESTS "Set to ON to build tests" ON)
+else()
+  option(VSRUN_BUILD_TESTS "Set to OFF to build tests" OFF)
+endif()
+if(VSRUN_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
