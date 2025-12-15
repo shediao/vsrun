@@ -46,3 +46,9 @@ add_executable(vs-install-dir src/vs-install-dir.cc)
 target_link_libraries(
   vs-install-dir PRIVATE subprocess::subprocess argparse::argparse
                          visualstudio_search)
+
+if(MINGW)
+  target_link_options(vsrun PRIVATE -static -static-libgcc -static-libstdc++)
+  target_link_options(vs-install-dir PRIVATE -static -static-libgcc
+                      -static-libstdc++)
+endif()
