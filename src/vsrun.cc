@@ -239,8 +239,8 @@ int main(int argc, char* argv[]) {
       auto ORIGINAL_TMP_DIR = std::filesystem::path(ORIGINAL_TMP.value());
       if (is_directory(ORIGINAL_TEMP_DIR) && is_directory(ORIGINAL_TMP_DIR)) {
         envs[L"PATH"] = to_wstring(ORIGINAL_PATH.value());
-        envs[L"TEMP"] = ORIGINAL_TEMP_DIR.native();
-        envs[L"TMP"] = ORIGINAL_TMP_DIR.native();
+        envs[L"TEMP"] = ORIGINAL_TEMP_DIR.make_preferred().native();
+        envs[L"TMP"] = ORIGINAL_TMP_DIR.make_preferred().native();
       }
     }
     while (!user_cmds.empty() &&
