@@ -150,10 +150,8 @@ int main(int argc, char* argv[]) {
   parser.help_footer(R"==(Examples:
   vsrun where cmake cl
 
-  # '&&' must be quoted
-  vsrun cmake -B build -S . -D CMAKE_BUILD_TYPE=Release '&&' cmake --build build --config Release
-
-  vsrun "cmake -B build -S . -D CMAKE_BUILD_TYPE=Release && cmake --build build --config Release"
+ # The command line string contains special characters: &<>()@^|
+ vsrun "cmake -B build -S . -D CMAKE_BUILD_TYPE=Release && cmake --build build --config Release"
   )==");
 
   try {
