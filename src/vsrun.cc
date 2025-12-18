@@ -25,7 +25,7 @@ std::string quote_path_if_needed(std::string&& p) {
   return p;
 }
 
-int main(int argc, char* argv[]) {
+int wmain(int argc, wchar_t* argv[]) {
   CoInitializer comInitializer;
   ISetupConfiguration2Ptr vs_setup_config([]() {
     ISetupConfigurationPtr configuration;

@@ -32,7 +32,7 @@ FetchContent_MakeAvailable(argparse)
 add_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
 include_directories(${PROJECT_SOURCE_DIR}/include/vssetup)
 if(MSVC)
-  add_compile_options(/source-charset:utf-8 /EHsc)
+  add_compile_options(/utf-8 /EHsc)
 endif()
 
 add_library(visualstudio_search src/visualstudio.cc)
@@ -47,10 +47,20 @@ target_link_libraries(
   vs-install-dir PRIVATE subprocess::subprocess argparse::argparse
                          visualstudio_search)
 
+# for win7
+target_compile_definitions(vsrun PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601
+                                         NTDDI_VERSION=0x06010000)
+target_compile_definitions(
+  vs-install-dir PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601
+                         NTDDI_VERSION=0x06010000)
+if(MSVC)
+  target_link_options(vsrun PRIVATE "/SUBSYSTEM:CONSOLE,6.01")
+  target_link_options(vs-install-dir PRIVATE "/SUBSYSTEM:CONSOLE,6.01")
+endif()
+
 if(MINGW)
-  target_link_options(vsrun PRIVATE -static -static-libgcc -static-libstdc++)
-  target_link_options(vs-install-dir PRIVATE -static -static-libgcc
-                      -static-libstdc++)
+  target_link_options(vsrun PRIVATE -static -mconsole -municode)
+  target_link_options(vs-install-dir PRIVATE -static -mconsole -municode)
 endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)

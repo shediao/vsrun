@@ -16,7 +16,7 @@
 
 #include "visualstudio.h"
 
-int main(int argc, char* argv[]) {
+int wmain(int argc, wchar_t* argv[]) {
   CoInitializer comInitializer;
   ISetupConfiguration2Ptr vs_setup_config([]() {
     ISetupConfigurationPtr configuration;
