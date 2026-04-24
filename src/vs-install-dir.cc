@@ -43,7 +43,7 @@ int wmain(int argc, wchar_t* argv[]) {
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
                   version_range)
-      .checker(
+      .validator(
           [&helper](std::string const& val) -> std::pair<bool, std::string> {
             auto wversion = to_version_range(to_wstring(val));
             uint64_t version_min, version_max;
@@ -59,7 +59,7 @@ int wmain(int argc, wchar_t* argv[]) {
                   "Professional, and Enterprise. Specify \"*\" by itself to "
                   "search all product instances installed",
                   product_id)
-      .checker([](std::string const& val) { return check_product_id(val); });
+      .validator([](std::string const& val) { return check_product_id(val); });
 
   parser.add_option(
       "workload",
@@ -71,7 +71,7 @@ int wmain(int argc, wchar_t* argv[]) {
           "sort",
           "example `version:asc,product:Professional-Enterprise-Community`",
           sort_by)
-      .checker([](std::string const& val) { return check_sort_by(val); });
+      .validator([](std::string const& val) { return check_sort_by(val); });
 
   parser.add_flag("first", "select this first visualstudio", select_one);
   parser.add_negative_flag("last", "select this first visualstudio",

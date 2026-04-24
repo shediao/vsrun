@@ -72,7 +72,7 @@ int wmain(int argc, wchar_t* argv[]) {
                   "A version range for instances to find. Example: "
                   "[17.0,18.0) will find versions 17.*.",
                   version_range)
-      .checker(
+      .validator(
           [&helper](std::string const& val) -> std::pair<bool, std::string> {
             if (val.empty()) {
               return {false, "version range is empty."};
@@ -91,7 +91,7 @@ int wmain(int argc, wchar_t* argv[]) {
                   "Professional, and Enterprise. Specify \"*\" by itself to "
                   "search all product instances installed",
                   product_id)
-      .checker([](std::string const& val) { return check_product_id(val); });
+      .validator([](std::string const& val) { return check_product_id(val); });
 
   parser.add_option(
       "workload",
@@ -103,11 +103,11 @@ int wmain(int argc, wchar_t* argv[]) {
           "sort",
           "example `version:asc,product:Professional-Enterprise-Community`",
           sort_by)
-      .checker([](std::string const& val) { return check_sort_by(val); });
+      .validator([](std::string const& val) { return check_sort_by(val); });
 
   parser.add_option("C", "work directory", workdir)
-      .value_help("workdir")
-      .checker([](std::string const& dir) {
+      .value_placeholder("workdir")
+      .validator([](std::string const& dir) {
         if (std::filesystem::is_directory(dir)) {
           return std::pair<bool, std::string>{true, ""};
         } else {
@@ -116,8 +116,8 @@ int wmain(int argc, wchar_t* argv[]) {
       });
 
   parser.add_option("u", "remove environment named <name>", uset_env_names)
-      .value_help("name")
-      .checker([](std::string const& name) {
+      .value_placeholder("name")
+      .validator([](std::string const& name) {
         if (std::find(name.begin(), name.end(), '=') != name.end()) {
           return std::pair<bool, std::string>{false, name + " contain '='"};
         }
@@ -146,8 +146,8 @@ int wmain(int argc, wchar_t* argv[]) {
   parser.add_positional("CMDSTR", "run command in vs dev environment",
                         user_cmds);
 
-  parser.set_remaining_are_positional();
-  parser.help_footer(R"==(Examples:
+  parser.set_treat_remaining_as_positional();
+  parser.usage_footer(R"==(Examples:
   vsrun where cmake cl
 
  # The command line string contains special characters: &<>()@^|

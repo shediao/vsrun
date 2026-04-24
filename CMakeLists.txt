@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(environment)
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/shediao/argparse.hpp.git
-  GIT_TAG v0.0.13)
+  GIT_TAG v0.0.14)
 FetchContent_MakeAvailable(argparse)
 
 add_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
