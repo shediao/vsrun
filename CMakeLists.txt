@@ -14,7 +14,7 @@ include(FetchContent)
 FetchContent_Declare(
   subprocess
   GIT_REPOSITORY https://github.com/shediao/subprocess.hpp.git
-  GIT_TAG v0.0.7)
+  GIT_TAG v0.0.8)
 FetchContent_MakeAvailable(subprocess)
 
 FetchContent_Declare(
