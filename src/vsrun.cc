@@ -60,6 +60,10 @@ int wmain(int argc, wchar_t* argv[]) {
   std::string workdir;
   std::vector<std::string> uset_env_names;
 
+  bool print_bash_completion{false};
+  bool print_zsh_completion{false};
+  bool print_fish_completion{false};
+
   argparse::ArgParser parser{
       "vsrun",
       R"(call C:\*\Microsoft Visual Studio\*\Common7\Tools\VsDevCmd.bat && %*)"};
@@ -153,6 +157,37 @@ int wmain(int argc, wchar_t* argv[]) {
  # The command line string contains special characters: &<>()@^|
  vsrun "cmake -B build -S . -D CMAKE_BUILD_TYPE=Release && cmake --build build --config Release"
   )==");
+
+  parser
+      .add_flag("print-bash-complete", "Print bash completion script",
+                print_bash_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_bash_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
+  parser
+      .add_flag("print-zsh-complete", "Print zsh completion script",
+                print_zsh_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_zsh_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
+  parser
+      .add_flag("print-fish-complete", "Print fish completion script",
+                print_fish_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_fish_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
 
   try {
     parser.parse(argc, argv);

@@ -34,6 +34,9 @@ int wmain(int argc, wchar_t* argv[]) {
   std::string sort_by = "";
   std::string select_workload = "*";
   std::optional<bool> select_one = std::nullopt;
+  bool print_bash_completion{false};
+  bool print_zsh_completion{false};
+  bool print_fish_completion{false};
 
   argparse::ArgParser parser{
       "vs-install-dir",
@@ -81,6 +84,37 @@ int wmain(int argc, wchar_t* argv[]) {
   parser.add_alias("p,professional", "product", "Professional");
   parser.add_alias("e,enterprise", "product", "Enterprise");
   parser.add_flag("verbose", "show verbose messages", debug_level);
+
+  parser
+      .add_flag("print-bash-complete", "Print bash completion script",
+                print_bash_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_bash_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
+  parser
+      .add_flag("print-zsh-complete", "Print zsh completion script",
+                print_zsh_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_zsh_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
+  parser
+      .add_flag("print-fish-complete", "Print fish completion script",
+                print_fish_completion)
+      .callback([&parser](bool v) {
+        if (v) {
+          parser.print_fish_complete(std::cout);
+          std::exit(0);
+        }
+      })
+      .hidden();
 
   try {
     parser.parse(argc, argv);
