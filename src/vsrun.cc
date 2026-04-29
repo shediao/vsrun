@@ -91,25 +91,31 @@ int wmain(int argc, wchar_t* argv[]) {
           });
   parser
       .add_option("product",
-                  "One or more product IDs to find. Defaults to Community, "
-                  "Professional, and Enterprise. Specify \"*\" by itself to "
-                  "search all product instances installed",
+                  "One or more product IDs to find. Defaults to \"*\" to "
+                  "search all product instances installed. "
+                  "Specify product IDs like Community, Professional, or "
+                  "Enterprise to narrow down the search.",
                   product_id)
       .validator([](std::string const& val) { return check_product_id(val); });
 
   parser.add_option(
       "workload",
-      "require workload, Microsoft.VisualStudio.Workload.NativeDesktop",
+      "Require a specific workload to be installed, e.g., "
+      "Microsoft.VisualStudio.Workload.NativeDesktop for native desktop "
+      "development.",
       select_workload);
 
   parser
       .add_option(
           "sort",
-          "example `version:asc,product:Professional-Enterprise-Community`",
+          "Sort the matching instances by the specified criteria. "
+          "Example: `version:asc,product:Professional-Enterprise-Community` "
+          "sorts by version ascending, then by product in the given order.",
           sort_by)
       .validator([](std::string const& val) { return check_sort_by(val); });
 
-  parser.add_option("C", "work directory", workdir)
+  parser.add_option("C", "Change to the specified working directory before "
+                          "running the command.", workdir)
       .value_placeholder("workdir")
       .validator([](std::string const& dir) {
         if (std::filesystem::is_directory(dir)) {
@@ -119,7 +125,8 @@ int wmain(int argc, wchar_t* argv[]) {
         }
       });
 
-  parser.add_option("u", "remove environment named <name>", uset_env_names)
+  parser.add_option("u", "Unset the specified environment variable(s) before "
+                          "running the command.", uset_env_names)
       .value_placeholder("name")
       .validator([](std::string const& name) {
         if (std::find(name.begin(), name.end(), '=') != name.end()) {
@@ -137,17 +144,20 @@ int wmain(int argc, wchar_t* argv[]) {
   parser.add_negative_flag("last", "select the last one to run",
                            select_the_first_one);
 
-  parser.add_flag("list", "list all match visual studio infomation",
+  parser.add_flag("list", "List all matching Visual Studio instances with "
+                          "detailed information.",
                   list_visual_studio);
   parser.add_flag("V,verbose", "show verbose messages", debug_level);
 
-  parser.add_flag("check", "check require visual studio is installed",
+  parser.add_flag("check", "Check whether a matching Visual Studio instance "
+                           "is installed.",
                   check_installed_or_not);
 
   parser.add_flag("i,ignore-environment", "start with an empty environment",
                   ignore_environment);
 
-  parser.add_positional("CMDSTR", "run command in vs dev environment",
+  parser.add_positional("CMDSTR", "The command(s) to run inside the Visual "
+                                  "Studio Developer Command Prompt environment.",
                         user_cmds);
 
   parser.set_treat_remaining_as_positional();

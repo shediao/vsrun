@@ -58,26 +58,33 @@ int wmain(int argc, wchar_t* argv[]) {
           });
   parser
       .add_option("product",
-                  "One or more product IDs to find. Defaults to Community, "
-                  "Professional, and Enterprise. Specify \"*\" by itself to "
-                  "search all product instances installed",
+                  "One or more product IDs to find. Defaults to \"*\" to "
+                  "search all product instances installed. "
+                  "Specify product IDs like Community, Professional, or "
+                  "Enterprise to narrow down the search.",
                   product_id)
       .validator([](std::string const& val) { return check_product_id(val); });
 
   parser.add_option(
       "workload",
-      "require workload, Microsoft.VisualStudio.Workload.NativeDesktop",
+      "Require a specific workload to be installed, e.g., "
+      "Microsoft.VisualStudio.Workload.NativeDesktop for native desktop "
+      "development.",
       select_workload);
 
   parser
       .add_option(
           "sort",
-          "example `version:asc,product:Professional-Enterprise-Community`",
+          "Sort the matching instances by the specified criteria. "
+          "Example: `version:asc,product:Professional-Enterprise-Community` "
+          "sorts by version ascending, then by product in the given order.",
           sort_by)
       .validator([](std::string const& val) { return check_sort_by(val); });
 
-  parser.add_flag("first", "select this first visualstudio", select_one);
-  parser.add_negative_flag("last", "select this first visualstudio",
+  parser.add_flag("first", "Select the first matching Visual Studio instance.",
+                  select_one);
+  parser.add_negative_flag("last", "Select the last matching Visual Studio "
+                                   "instance.",
                            select_one);
 
   parser.add_alias("c,community", "product", "Community");
