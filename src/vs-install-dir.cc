@@ -34,6 +34,7 @@ int wmain(int argc, wchar_t* argv[]) {
   std::string sort_by = "";
   std::string select_workload = "*";
   std::optional<bool> select_one = std::nullopt;
+  bool print_version{false};
   bool print_bash_completion{false};
   bool print_zsh_completion{false};
   bool print_fish_completion{false};
@@ -83,14 +84,23 @@ int wmain(int argc, wchar_t* argv[]) {
 
   parser.add_flag("first", "Select the first matching Visual Studio instance.",
                   select_one);
-  parser.add_negative_flag("last", "Select the last matching Visual Studio "
-                                   "instance.",
+  parser.add_negative_flag("last",
+                           "Select the last matching Visual Studio "
+                           "instance.",
                            select_one);
 
   parser.add_alias("c,community", "product", "Community");
   parser.add_alias("p,professional", "product", "Professional");
   parser.add_alias("e,enterprise", "product", "Enterprise");
   parser.add_flag("verbose", "show verbose messages", debug_level);
+
+  parser.add_flag("V", "Print version", print_version)
+      .callback([&parser](bool v) {
+        if (v) {
+          std::cout << "vs-install-dir " << GIT_DESCRIBE << std::endl;
+          std::exit(0);
+        }
+      });
 
   parser
       .add_flag("print-bash-complete", "Print bash completion script",

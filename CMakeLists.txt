@@ -29,6 +29,16 @@ FetchContent_Declare(
   GIT_TAG v0.0.15)
 FetchContent_MakeAvailable(argparse)
 
+execute_process(
+  COMMAND git describe --tags --always --dirty
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_DESCRIBE
+  OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT GIT_DESCRIBE)
+  set(GIT_DESCRIBE "unknown")
+endif()
+message(STATUS "Git describe: ${GIT_DESCRIBE}")
+
 add_compile_definitions(vsrun PRIVATE UNICODE _UNICODE)
 include_directories(${PROJECT_SOURCE_DIR}/include/vssetup)
 if(MSVC)
@@ -48,11 +58,13 @@ target_link_libraries(
                          visualstudio_search)
 
 # for win7
-target_compile_definitions(vsrun PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601
-                                         NTDDI_VERSION=0x06010000)
 target_compile_definitions(
-  vs-install-dir PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601
-                         NTDDI_VERSION=0x06010000)
+  vsrun PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601 NTDDI_VERSION=0x06010000
+                GIT_DESCRIBE="${GIT_DESCRIBE}")
+target_compile_definitions(
+  vs-install-dir
+  PRIVATE _WIN32_WINNT=0x0601 WINVER=0x0601 NTDDI_VERSION=0x06010000
+          GIT_DESCRIBE="${GIT_DESCRIBE}")
 if(MSVC)
   target_link_options(vsrun PRIVATE "/SUBSYSTEM:CONSOLE,6.01")
   target_link_options(vs-install-dir PRIVATE "/SUBSYSTEM:CONSOLE,6.01")
