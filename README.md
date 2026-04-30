@@ -1,5 +1,7 @@
 # vsrun
 
+[![CI](https://github.com/shediao/vsrun/actions/workflows/ci.yml/badge.svg)](https://github.com/shediao/vsrun/actions/workflows/ci.yml)
+[![Release](https://github.com/shediao/vsrun/actions/workflows/release.yml/badge.svg)](https://github.com/shediao/vsrun/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Run commands in a Visual Studio Developer Command Prompt environment — without opening Visual Studio.

@@ -1,5 +1,7 @@
 # vsrun
 
+[![CI](https://github.com/shediao/vsrun/actions/workflows/ci.yml/badge.svg)](https://github.com/shediao/vsrun/actions/workflows/ci.yml)
+[![Release](https://github.com/shediao/vsrun/actions/workflows/release.yml/badge.svg)](https://github.com/shediao/vsrun/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 在 Visual Studio Developer Command Prompt 环境中运行命令 — 无需打开 Visual Studio。
