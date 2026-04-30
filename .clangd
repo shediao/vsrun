@@ -1,0 +1,6 @@
+Diagnostics:
+  UnusedIncludes: None
+CompileFlags:
+  CompilationDatabase: build/
+Index:
+  Background: true
