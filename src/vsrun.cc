@@ -17,14 +17,6 @@
 
 #include "visualstudio.h"
 
-std::string quote_path_if_needed(std::string&& p) {
-  if (std::find(p.begin(), p.end(), ' ') != p.end()) {
-    p.insert(p.begin(), '"');
-    p.push_back('"');
-  }
-  return p;
-}
-
 int wmain(int argc, wchar_t* argv[]) {
   CoInitializer comInitializer;
   ISetupConfiguration2Ptr vs_setup_config([]() {
@@ -280,7 +272,7 @@ int wmain(int argc, wchar_t* argv[]) {
                                   "/d",
                                   "/c",
                                   "call",
-                                  quote_path_if_needed(VcDevCmdPath.string()),
+                                  VcDevCmdPath.string(),
                                   "-no_logo",
                                   "-host_arch=" + host_arch,
                                   "-arch=" + arch,
