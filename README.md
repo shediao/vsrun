@@ -20,6 +20,7 @@ There is also a companion tool `vs-install-dir` that simply prints the installat
 - **Environment control** — unset specific environment variables, start with an empty environment, or work in a custom working directory
 - **MSYS2 / Git Bash support** — automatically detects and handles MSYS2 environment paths
 - **Shell completions** — built-in generation of bash, zsh, and fish completion scripts
+- **Self-update** — check GitHub Releases and upgrade to the latest version with `--update`
 - **Windows 7 compatible** — targets `_WIN32_WINNT=0x0601`
 
 ## Requirements
@@ -78,6 +79,7 @@ vsrun [options] [CMDSTR...]
 | `--list`                   | List all matching VS instances without executing                                   |
 | `--check`                  | Check whether a matching VS instance is installed (exit code)                      |
 | `--verbose`                | Enable verbose debug output                                                        |
+| `-U, --update`             | Check GitHub Releases for a newer version and upgrade if available                |
 | `-V`                       | Print version and exit                                                             |
 
 #### Examples
@@ -97,6 +99,9 @@ vsrun -e --arch arm64 "cl /?"     # Enterprise, target ARM64
 
 # Check if a compatible Visual Studio is installed
 vsrun --check && echo "VS found" || echo "VS not found"
+
+# Check for a newer version on GitHub Releases and upgrade
+vsrun --update
 
 # Run in a specific working directory with clean environment
 vsrun -i -C "D:\MyProject" nmake

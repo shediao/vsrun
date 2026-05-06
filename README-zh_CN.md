@@ -20,6 +20,7 @@
 - **环境变量控制** — 可移除指定环境变量、从空环境启动，或在指定工作目录下运行
 - **MSYS2 / Git Bash 支持** — 自动检测并处理 MSYS2 环境路径
 - **Shell 补全** — 内置生成 bash、zsh、fish 补全脚本
+- **自我更新** — 通过 `--update` 检查 GitHub Releases 并升级到最新版本
 - **兼容 Windows 7** — 目标 `_WIN32_WINNT=0x0601`
 
 ## 环境要求
@@ -78,6 +79,7 @@ vsrun [选项] [CMDSTR...]
 | `--list`                   | 列出所有匹配的 VS 实例，不执行命令                                       |
 | `--check`                  | 检查是否有匹配的 VS 实例（通过退出码判断）                               |
 | `--verbose`                | 启用详细调试输出                                                         |
+| `-U, --update`             | 检查 GitHub Releases 是否有新版本，如有则下载并升级                      |
 | `-V`                       | 打印版本并退出                                                           |
 
 #### 示例
@@ -97,6 +99,9 @@ vsrun -e --arch arm64 "cl /?"     # Enterprise 版本，目标 ARM64
 
 # 检查是否安装了兼容的 Visual Studio
 vsrun --check && echo "已找到 VS" || echo "未找到 VS"
+
+# 检查 GitHub Releases 是否有新版本并升级
+vsrun --update
 
 # 在指定目录以干净环境运行
 vsrun -i -C "D:\MyProject" nmake

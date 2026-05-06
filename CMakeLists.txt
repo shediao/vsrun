@@ -46,16 +46,20 @@ if(MSVC)
 endif()
 
 add_library(visualstudio_search src/visualstudio.cc)
+add_library(update src/update.cc)
+target_include_directories(update PRIVATE ${PROJECT_SOURCE_DIR}/third_party/json/include)
+target_link_libraries(update PRIVATE winhttp)
+
 add_executable(vsrun src/vsrun.cc)
 
 target_link_libraries(
   vsrun PRIVATE environment::environment subprocess::subprocess
-                argparse::argparse visualstudio_search)
+                argparse::argparse visualstudio_search update)
 
 add_executable(vs-install-dir src/vs-install-dir.cc)
 target_link_libraries(
   vs-install-dir PRIVATE subprocess::subprocess argparse::argparse
-                         visualstudio_search)
+                         visualstudio_search update)
 
 # for win7
 target_compile_definitions(

@@ -14,6 +14,7 @@
 #include <iostream>
 #include <subprocess/subprocess.hpp>
 
+#include "update.h"
 #include "visualstudio.h"
 
 int wmain(int argc, wchar_t* argv[]) {
@@ -38,6 +39,7 @@ int wmain(int argc, wchar_t* argv[]) {
   bool print_bash_completion{false};
   bool print_zsh_completion{false};
   bool print_fish_completion{false};
+  bool check_update{false};
 
   argparse::ArgParser parser{
       "vs-install-dir",
@@ -98,6 +100,18 @@ int wmain(int argc, wchar_t* argv[]) {
       .callback([&parser](bool v) {
         if (v) {
           std::cout << "vs-install-dir " << GIT_DESCRIBE << std::endl;
+          std::exit(0);
+        }
+      });
+
+  parser
+      .add_flag("U,update",
+                "Check for a newer version on GitHub and update if available.",
+                check_update)
+      .callback([&parser](bool v) {
+        if (v) {
+          check_for_update(GIT_DESCRIBE, "shediao", "vsrun",
+                           "vs-install-dir.exe");
           std::exit(0);
         }
       });
