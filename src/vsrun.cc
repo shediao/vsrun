@@ -190,7 +190,7 @@ int wmain(int argc, wchar_t* argv[]) {
   vsrun where cmake cl
 
  # The command line string contains special characters: &<>()@^|
- vsrun "cmake -B build -S . -D CMAKE_BUILD_TYPE=Release && cmake --build build --config Release"
+ vsrun cmake -B build -S . -D CMAKE_BUILD_TYPE=Release "&&" cmake --build build --config Release
   )==");
 
   parser
@@ -312,13 +312,6 @@ int wmain(int argc, wchar_t* argv[]) {
         envs[L"TEMP"] = ORIGINAL_TEMP_DIR.make_preferred().native();
         envs[L"TMP"] = ORIGINAL_TMP_DIR.make_preferred().native();
       }
-    }
-    while (!user_cmds.empty() &&
-           user_cmds.begin()->find('=') != std::string::npos) {
-      auto tmp = split(*user_cmds.begin(), '=', 1);
-      envs.insert(
-          {to_wstring(tmp[0]), to_wstring(tmp.size() > 1 ? tmp[1] : "")});
-      user_cmds.erase(user_cmds.begin());
     }
 
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
