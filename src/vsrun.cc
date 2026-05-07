@@ -52,6 +52,7 @@ int wmain(int argc, wchar_t* argv[]) {
 
   std::string workdir;
   std::vector<std::string> uset_env_names;
+  std::vector<std::string> set_env_vars;
 
   bool print_version{false};
   bool print_bash_completion{false};
@@ -132,6 +133,24 @@ int wmain(int argc, wchar_t* argv[]) {
       .validator([](std::string const& name) {
         if (std::find(name.begin(), name.end(), '=') != name.end()) {
           return std::pair<bool, std::string>{false, name + " contain '='"};
+        }
+        return std::pair<bool, std::string>{true, ""};
+      });
+
+  parser
+      .add_option("E",
+                  "Set environment variable(s) for the command. "
+                  "Format: key=value. Can be specified multiple times.",
+                  set_env_vars)
+      .value_placeholder("key=value")
+      .validator([](std::string const& kv) {
+        auto eq_pos = kv.find('=');
+        if (eq_pos == std::string::npos) {
+          return std::pair<bool, std::string>{false, kv + " not key=value"};
+        }
+        if (eq_pos == 0) {
+          return std::pair<bool, std::string>{
+              false, "invalid key=value: " + kv + " (empty key)"};
         }
         return std::pair<bool, std::string>{true, ""};
       });
@@ -312,6 +331,13 @@ int wmain(int argc, wchar_t* argv[]) {
         envs[L"TEMP"] = ORIGINAL_TEMP_DIR.make_preferred().native();
         envs[L"TMP"] = ORIGINAL_TMP_DIR.make_preferred().native();
       }
+    }
+
+    for (auto const& kv : set_env_vars) {
+      auto eq_pos = kv.find('=');
+      auto key = to_wstring(kv.substr(0, eq_pos));
+      auto value = to_wstring(kv.substr(eq_pos + 1));
+      envs[key] = value;
     }
 
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
