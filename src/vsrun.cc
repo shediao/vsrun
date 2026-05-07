@@ -52,7 +52,7 @@ int wmain(int argc, wchar_t* argv[]) {
 
   std::string workdir;
   std::vector<std::string> uset_env_names;
-  std::vector<std::string> set_env_vars;
+  std::vector<std::pair<std::string, std::string>> set_env_vars;
 
   bool print_version{false};
   bool print_bash_completion{false};
@@ -135,13 +135,25 @@ int wmain(int argc, wchar_t* argv[]) {
           return std::pair<bool, std::string>{false, name + " contain '='"};
         }
         return std::pair<bool, std::string>{true, ""};
+      })
+      .callback([&set_env_vars](auto const& values) {
+        if (values.empty()) {
+          return;
+        }
+        if (auto it = std::find_if(set_env_vars.begin(), set_env_vars.end(),
+                                   [&values](auto const& item) {
+                                     return item.first == values.back();
+                                   });
+            it != set_env_vars.end()) {
+          set_env_vars.erase(it);
+        }
       });
 
   parser
       .add_option("E",
                   "Set environment variable(s) for the command. "
                   "Format: key=value. Can be specified multiple times.",
-                  set_env_vars)
+                  set_env_vars, '=')
       .value_placeholder("key=value")
       .validator([](std::string const& kv) {
         auto eq_pos = kv.find('=');
@@ -153,6 +165,16 @@ int wmain(int argc, wchar_t* argv[]) {
               false, "invalid key=value: " + kv + " (empty key)"};
         }
         return std::pair<bool, std::string>{true, ""};
+      })
+      .callback([&uset_env_names](auto const& values) {
+        if (values.empty()) {
+          return;
+        }
+        if (auto it = std::find(uset_env_names.begin(), uset_env_names.end(),
+                                values.back().first);
+            it != uset_env_names.end()) {
+          uset_env_names.erase(it);
+        }
       });
 
   parser.add_alias("c,community", "product", "Community");
@@ -333,11 +355,8 @@ int wmain(int argc, wchar_t* argv[]) {
       }
     }
 
-    for (auto const& kv : set_env_vars) {
-      auto eq_pos = kv.find('=');
-      auto key = to_wstring(kv.substr(0, eq_pos));
-      auto value = to_wstring(kv.substr(eq_pos + 1));
-      envs[key] = value;
+    for (auto const& [key, value] : set_env_vars) {
+      envs[to_wstring(key)] = to_wstring(value);
     }
 
     args.insert(args.end(), user_cmds.begin(), user_cmds.end());
