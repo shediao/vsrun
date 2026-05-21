@@ -18,6 +18,16 @@
 #include "update.h"
 #include "visualstudio.h"
 
+std::string add_quote_if_needed(std::string const& arg) {
+  bool needs_quoting =
+      arg.empty() || arg.find_first_of(" \t\n\v\"") != std::wstring::npos;
+  if (needs_quoting) {
+    return "\"" + arg + "\"";
+  } else {
+    return arg;
+  }
+}
+
 int wmain(int argc, wchar_t* argv[]) {
   CoInitializer comInitializer;
   ISetupConfiguration2Ptr vs_setup_config([]() {
@@ -324,15 +334,18 @@ int wmain(int argc, wchar_t* argv[]) {
       return EXIT_FAILURE;
     }
 
-    std::vector<std::string> args{"cmd.exe",
-                                  "/d",
-                                  "/c",
-                                  "call",
-                                  VcDevCmdPath.string(),
-                                  "-no_logo",
-                                  "-host_arch=" + host_arch,
-                                  "-arch=" + arch,
-                                  ">nul&&"};
+    std::wstring cmd_arg = L"call ";
+    cmd_arg.append(to_wstring(add_quote_if_needed(VcDevCmdPath.string())));
+    cmd_arg.append(L" -no_logo -host_arch=");
+    cmd_arg.append(to_wstring(host_arch));
+    cmd_arg.append(L" -arch=");
+    cmd_arg.append(to_wstring(arch));
+    cmd_arg.append(L">nul&&");
+    for (auto const& user_cmd : user_cmds) {
+      cmd_arg.append(L" ");
+      cmd_arg.append(to_wstring(user_cmd));
+    }
+    std::vector<std::wstring> args{L"cmd.exe", L"/d", L"/c", cmd_arg};
 
     std::map<std::wstring, std::wstring> envs;
     for (auto name : uset_env_names) {
@@ -357,13 +370,6 @@ int wmain(int argc, wchar_t* argv[]) {
 
     for (auto const& [key, value] : set_env_vars) {
       envs[to_wstring(key)] = to_wstring(value);
-    }
-
-    args.insert(args.end(), user_cmds.begin(), user_cmds.end());
-    if (debug_level >= 1) {
-      std::copy(begin(args), end(args),
-                std::ostream_iterator<std::string>(std::cerr, " "));
-      std::cerr << '\n';
     }
 
     using subprocess::named_arguments::cwd;
