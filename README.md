@@ -17,8 +17,7 @@ There is also a companion tool `vs-install-dir` that simply prints the installat
 - **Workload filtering** — require a specific workload to be installed (e.g., `Microsoft.VisualStudio.Workload.NativeDesktop`)
 - **Architecture selection** — choose target arch (`x86`, `x64`, `arm64`) and host arch independently
 - **Flexible sorting** — sort matching instances by version, date, or product before picking the first/last one
-- **Environment control** — unset specific environment variables, start with an empty environment, or work in a custom working directory
-- **MSYS2 / Git Bash support** — automatically detects and handles MSYS2 environment paths
+- **Environment control** — set or unset specific environment variables, start with a clean VS environment, or work in a custom working directory
 - **Shell completions** — built-in generation of bash, zsh, and fish completion scripts
 - **Self-update** — check GitHub Releases and upgrade to the latest version with `--update`
 - **Windows 7 compatible** — targets `_WIN32_WINNT=0x0601`
@@ -75,7 +74,8 @@ vsrun [options] [CMDSTR...]
 | `--last`                   | Use the last matching instance                                                     |
 | `-C`                       | Working directory before running commands                                          |
 | `-u`                       | Unset environment variable(s)                                                      |
-| `-i, --ignore-environment` | Start with an empty environment                                                    |
+| `-E`                       | Set environment variable(s) for the command (`key=value`, repeatable)              |
+| `-i, --ignore-environment` | Start with a clean VS environment (parent env not forwarded)                       |
 | `--list`                   | List all matching VS instances without executing                                   |
 | `--check`                  | Check whether a matching VS instance is installed (exit code)                      |
 | `--verbose`                | Enable verbose debug output                                                        |
@@ -105,6 +105,9 @@ vsrun --update
 
 # Run in a specific working directory with clean environment
 vsrun -i -C "D:\MyProject" nmake
+
+# Set extra environment variables for the command
+vsrun -E "CC=clang-cl" -E "CXX=clang-cl" cmake -B build -S .
 ```
 
 ### vs-install-dir
@@ -145,8 +148,8 @@ vsrun --print-fish-complete > ~/.config/fish/completions/vsrun.fish
 1. `vsrun` initializes COM and creates a `ISetupConfiguration2` instance via the Visual Studio Setup API.
 2. It enumerates all VS instances and filters them by version range, product ID, and workload.
 3. It locates `VsDevCmd.bat` (typically at `Common7\Tools\VsDevCmd.bat` under the install path).
-4. It spawns `cmd.exe` that calls `VsDevCmd.bat` with the requested `-arch` and `-host_arch` flags, then chains the user's commands via `&&`.
-5. Environment variables from the current process are forwarded (with special handling for MSYS2 environments).
+4. It spawns `cmd.exe` that calls `VsDevCmd.bat` piped to `set` to capture the complete Visual Studio developer environment variables.
+5. It parses the captured output, applies `-u`/`-E` modifications, then runs the user's commands directly with the VS environment via `subprocess::run`. The parent process environment is not forwarded — only the VS developer environment is used.
 
 ## License
 

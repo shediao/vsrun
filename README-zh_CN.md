@@ -17,8 +17,7 @@
 - **工作负载过滤** — 要求安装特定的工作负载（如 `Microsoft.VisualStudio.Workload.NativeDesktop`）
 - **架构选择** — 独立选择目标架构（`x86`、`x64`、`arm64`）和主机架构
 - **灵活排序** — 按版本、日期或产品排序匹配的实例，然后选择第一个或最后一个
-- **环境变量控制** — 可移除指定环境变量、从空环境启动，或在指定工作目录下运行
-- **MSYS2 / Git Bash 支持** — 自动检测并处理 MSYS2 环境路径
+- **环境变量控制** — 可设置或移除指定环境变量、使用干净的 VS 环境启动，或在指定工作目录下运行
 - **Shell 补全** — 内置生成 bash、zsh、fish 补全脚本
 - **自我更新** — 通过 `--update` 检查 GitHub Releases 并升级到最新版本
 - **兼容 Windows 7** — 目标 `_WIN32_WINNT=0x0601`
@@ -75,7 +74,8 @@ vsrun [选项] [CMDSTR...]
 | `--last`                   | 使用最后一个匹配的实例                                                   |
 | `-C`                       | 运行命令前切换到指定工作目录                                             |
 | `-u`                       | 移除指定环境变量                                                         |
-| `-i, --ignore-environment` | 从空环境启动                                                             |
+| `-E`                       | 为命令设置环境变量（`key=value`，可重复使用）                            |
+| `-i, --ignore-environment` | 使用干净的 VS 环境启动（不转发父进程环境）                               |
 | `--list`                   | 列出所有匹配的 VS 实例，不执行命令                                       |
 | `--check`                  | 检查是否有匹配的 VS 实例（通过退出码判断）                               |
 | `--verbose`                | 启用详细调试输出                                                         |
@@ -105,6 +105,9 @@ vsrun --update
 
 # 在指定目录以干净环境运行
 vsrun -i -C "D:\MyProject" nmake
+
+# 为命令设置额外的环境变量
+vsrun -E "CC=clang-cl" -E "CXX=clang-cl" cmake -B build -S .
 ```
 
 ### vs-install-dir
@@ -145,8 +148,8 @@ vsrun --print-fish-complete > ~/.config/fish/completions/vsrun.fish
 1. `vsrun` 初始化 COM 并通过 Visual Studio Setup API 创建 `ISetupConfiguration2` 实例。
 2. 枚举所有 VS 实例，按版本范围、产品 ID 和工作负载进行筛选。
 3. 定位 `VsDevCmd.bat`（通常位于安装路径下的 `Common7\Tools\VsDevCmd.bat`）。
-4. 生成一个 `cmd.exe` 进程，调用 `VsDevCmd.bat` 并传入 `-arch` 和 `-host_arch` 参数，然后通过 `&&` 链接用户的命令。
-5. 转发当前进程的环境变量（对 MSYS2 环境有特殊处理）。
+4. 生成一个 `cmd.exe` 进程，调用 `VsDevCmd.bat` 并通过管道输出到 `set` 命令，以捕获完整的 Visual Studio 开发环境变量。
+5. 解析捕获的环境变量，应用 `-u`/`-E` 的修改，然后通过 `subprocess::run` 直接以 VS 环境运行用户命令。父进程的环境变量不会被转发——仅使用 VS 开发环境。
 
 ## 许可证
 

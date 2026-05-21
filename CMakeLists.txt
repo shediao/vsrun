@@ -14,19 +14,19 @@ include(FetchContent)
 FetchContent_Declare(
   subprocess
   GIT_REPOSITORY https://github.com/shediao/subprocess.hpp.git
-  GIT_TAG v0.0.10)
+  GIT_TAG v0.0.17)
 FetchContent_MakeAvailable(subprocess)
 
 FetchContent_Declare(
   environment
   GIT_REPOSITORY https://github.com/shediao/environment.hpp.git
-  GIT_TAG v0.0.5)
+  GIT_TAG v0.0.6)
 FetchContent_MakeAvailable(environment)
 
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/shediao/argparse.hpp.git
-  GIT_TAG v0.0.17)
+  GIT_TAG v0.1.2)
 FetchContent_MakeAvailable(argparse)
 
 execute_process(

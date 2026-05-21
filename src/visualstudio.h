@@ -147,6 +147,13 @@ inline std::vector<std::string> split(std::string const& s, char delim,
   return result;
 }
 
+inline std::vector<std::wstring> split(std::wstring const& s, wchar_t delim,
+                                       int max) {
+  std::vector<std::wstring> result;
+  split_to_if(result, s, [delim](char c) { return c == delim; }, max, false);
+  return result;
+}
+
 struct VisualStudio {
   uint64_t version_;
   FILETIME install_datetime_;

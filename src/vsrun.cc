@@ -324,52 +324,46 @@ int wmain(int argc, wchar_t* argv[]) {
       return EXIT_FAILURE;
     }
 
-    std::vector<std::string> args{"cmd.exe",
-                                  "/d",
-                                  "/c",
-                                  "call",
-                                  VcDevCmdPath.string(),
-                                  "-no_logo",
-                                  "-host_arch=" + host_arch,
-                                  "-arch=" + arch,
-                                  ">nul&&"};
+    auto [ret, output, error] = subprocess::capture_run(
+        L"cmd.exe", L"/d", L"/c", L"call", to_wstring(VcDevCmdPath.string()),
+        L"-no_logo", L"-host_arch=" + to_wstring(host_arch),
+        L"-arch=" + to_wstring(arch), L">nul&&set");
 
-    std::map<std::wstring, std::wstring> envs;
-    for (auto name : uset_env_names) {
-      env::unset(name);
+    if (!ret) {
+      std::cout << output.to_string() << '\n';
+      std::cerr << error.to_string() << '\n';
+      return ret;
     }
-    if (!ignore_environment) {
-      envs = env::allutf16();
-    }
-    auto MSYSTEM = env::get("MSYSTEM");
-    auto ORIGINAL_PATH = env::get("ORIGINAL_PATH");
-    auto ORIGINAL_TEMP = env::get("ORIGINAL_TEMP");
-    auto ORIGINAL_TMP = env::get("ORIGINAL_TMP");
-    if (MSYSTEM && ORIGINAL_PATH && ORIGINAL_TEMP && ORIGINAL_TMP) {
-      auto ORIGINAL_TEMP_DIR = std::filesystem::path(ORIGINAL_TEMP.value());
-      auto ORIGINAL_TMP_DIR = std::filesystem::path(ORIGINAL_TMP.value());
-      if (is_directory(ORIGINAL_TEMP_DIR) && is_directory(ORIGINAL_TMP_DIR)) {
-        envs[L"PATH"] = to_wstring(ORIGINAL_PATH.value());
-        envs[L"TEMP"] = ORIGINAL_TEMP_DIR.make_preferred().native();
-        envs[L"TMP"] = ORIGINAL_TMP_DIR.make_preferred().native();
+
+    std::wstring output_str = to_wstring(
+        std::string_view{(char*)output.data(), output.size()}, CP_ACP);
+
+    std::map<std::wstring, std::wstring> vs_env_vars;
+    auto lines = split(output_str, L'\n', -1);
+    for (auto& line : lines) {
+      if (!line.empty() && line.back() == L'\r') {
+        line.pop_back();
+      }
+      auto p = line.find(L"=");
+      if (p != std::wstring::npos) {
+        vs_env_vars.insert({line.substr(0, p), line.substr(p + 1)});
       }
     }
 
-    for (auto const& [key, value] : set_env_vars) {
-      envs[to_wstring(key)] = to_wstring(value);
+    for (auto name : uset_env_names) {
+      env::unset(name);
+      vs_env_vars.erase(to_wstring(name));
     }
 
-    args.insert(args.end(), user_cmds.begin(), user_cmds.end());
-    if (debug_level >= 1) {
-      std::copy(begin(args), end(args),
-                std::ostream_iterator<std::string>(std::cerr, " "));
-      std::cerr << '\n';
+    for (auto const& [key, value] : set_env_vars) {
+      vs_env_vars[to_wstring(key)] = to_wstring(value);
     }
 
     using subprocess::named_arguments::cwd;
     using subprocess::named_arguments::env;
 
-    return subprocess::run(args, cwd = workdir, env = envs);
+    subprocess::run(user_cmds, env = vs_env_vars, cwd = workdir);
+
   } else {
     std::cerr << parser.usage() << '\n';
     return EXIT_FAILURE;
