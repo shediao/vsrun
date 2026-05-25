@@ -308,65 +308,62 @@ int wmain(int argc, wchar_t* argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (!user_cmds.empty()) {
-    std::filesystem::path installationPath =
-        select_the_first_one ? all_match_visualstudios.front().install_path_
-                             : all_match_visualstudios.back().install_path_;
-    if (!is_directory(installationPath)) {
-      std::cerr << "installation not a directory: " << installationPath << '\n';
-      return EXIT_FAILURE;
-    }
-    std::filesystem::path VcDevCmdPath =
-        installationPath / "Common7" / "Tools" / "VsDevCmd.bat";
-    if (!is_regular_file(VcDevCmdPath)) {
-      std::cerr << VcDevCmdPath.string()
-                << " not exists or not a bat file: " << VcDevCmdPath << '\n';
-      return EXIT_FAILURE;
-    }
-
-    auto [ret, output, error] = subprocess::capture_run(
-        L"cmd.exe", L"/d", L"/c", L"call", to_wstring(VcDevCmdPath.string()),
-        L"-no_logo", L"-host_arch=" + to_wstring(host_arch),
-        L"-arch=" + to_wstring(arch), L">nul&&set");
-
-    if (!ret) {
-      std::cout << output.to_string() << '\n';
-      std::cerr << error.to_string() << '\n';
-      return ret;
-    }
-
-    std::wstring output_str = to_wstring(
-        std::string_view{(char*)output.data(), output.size()}, CP_ACP);
-
-    std::map<std::wstring, std::wstring> vs_env_vars;
-    auto lines = split(output_str, L'\n', -1);
-    for (auto& line : lines) {
-      if (!line.empty() && line.back() == L'\r') {
-        line.pop_back();
-      }
-      auto p = line.find(L"=");
-      if (p != std::wstring::npos) {
-        vs_env_vars.insert({line.substr(0, p), line.substr(p + 1)});
-      }
-    }
-
-    for (auto name : uset_env_names) {
-      env::unset(name);
-      vs_env_vars.erase(to_wstring(name));
-    }
-
-    for (auto const& [key, value] : set_env_vars) {
-      vs_env_vars[to_wstring(key)] = to_wstring(value);
-    }
-
-    using subprocess::named_arguments::cwd;
-    using subprocess::named_arguments::env;
-
-    subprocess::run(user_cmds, env = vs_env_vars, cwd = workdir);
-
-  } else {
+  if (user_cmds.empty()) {
     std::cerr << parser.usage() << '\n';
     return EXIT_FAILURE;
   }
-  return EXIT_SUCCESS;
+  std::filesystem::path installationPath =
+      select_the_first_one ? all_match_visualstudios.front().install_path_
+                           : all_match_visualstudios.back().install_path_;
+  if (!is_directory(installationPath)) {
+    std::cerr << "installation not a directory: " << installationPath << '\n';
+    return EXIT_FAILURE;
+  }
+  std::filesystem::path VcDevCmdPath =
+      installationPath / "Common7" / "Tools" / "VsDevCmd.bat";
+  if (!is_regular_file(VcDevCmdPath)) {
+    std::cerr << VcDevCmdPath.string()
+              << " not exists or not a bat file: " << VcDevCmdPath << '\n';
+    return EXIT_FAILURE;
+  }
+
+  auto [ret, output, error] = subprocess::capture_run(
+      L"cmd.exe", L"/d", L"/c", L"call", to_wstring(VcDevCmdPath.string()),
+      L"-no_logo", L"-host_arch=" + to_wstring(host_arch),
+      L"-arch=" + to_wstring(arch), L">nul&&set");
+
+  if (0 != ret) {
+    std::cout << output.to_string() << '\n';
+    std::cerr << error.to_string() << '\n';
+    return ret;
+  }
+
+  std::wstring output_str =
+      to_wstring(std::string_view{(char*)output.data(), output.size()}, CP_ACP);
+
+  std::map<std::wstring, std::wstring> vs_env_vars;
+  auto lines = split(output_str, L'\n', -1);
+  for (auto& line : lines) {
+    if (!line.empty() && line.back() == L'\r') {
+      line.pop_back();
+    }
+    auto p = line.find(L"=");
+    if (p != std::wstring::npos) {
+      vs_env_vars.insert({line.substr(0, p), line.substr(p + 1)});
+    }
+  }
+
+  for (auto name : uset_env_names) {
+    env::unset(name);
+    vs_env_vars.erase(to_wstring(name));
+  }
+
+  for (auto const& [key, value] : set_env_vars) {
+    vs_env_vars[to_wstring(key)] = to_wstring(value);
+  }
+
+  using subprocess::named_arguments::cwd;
+  using subprocess::named_arguments::env;
+
+  return subprocess::run(user_cmds, env = vs_env_vars, cwd = workdir);
 }
